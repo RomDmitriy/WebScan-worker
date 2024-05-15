@@ -1,0 +1,346 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  gitParser.UserInfo:
+    properties:
+      repo:
+        type: string
+      token:
+        type: string
+      user:
+        type: string
+    type: object
+  models.Affected:
+    properties:
+      database_specific:
+        additionalProperties: true
+        type: object
+      ecosystem_specific:
+        additionalProperties: true
+        type: object
+      package:
+        $ref: '#/definitions/models.Package'
+      ranges:
+        items:
+          $ref: '#/definitions/models.Range'
+        type: array
+      severity:
+        items:
+          $ref: '#/definitions/models.Severity'
+        type: array
+      versions:
+        items:
+          type: string
+        type: array
+    type: object
+  models.AnalysisInfo:
+    properties:
+      called:
+        type: boolean
+    type: object
+  models.Credit:
+    properties:
+      contact:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  models.Ecosystem:
+    enum:
+    - Go
+    - npm
+    - OSS-Fuzz
+    - PyPI
+    - RubyGems
+    - crates.io
+    - Packagist
+    - Maven
+    - NuGet
+    - Linux
+    - Debian
+    - Alpine
+    - Hex
+    - Android
+    - GitHub Actions
+    - Pub
+    - ConanCenter
+    - Rocky Linux
+    - AlmaLinux
+    - Bitnami
+    - Photon OS
+    - CRAN
+    - Bioconductor
+    - SwiftURL
+    type: string
+    x-enum-varnames:
+    - EcosystemGo
+    - EcosystemNPM
+    - EcosystemOSSFuzz
+    - EcosystemPyPI
+    - EcosystemRubyGems
+    - EcosystemCratesIO
+    - EcosystemPackagist
+    - EcosystemMaven
+    - EcosystemNuGet
+    - EcosystemLinux
+    - EcosystemDebian
+    - EcosystemAlpine
+    - EcosystemHex
+    - EcosystemAndroid
+    - EcosystemGitHubActions
+    - EcosystemPub
+    - EcosystemConanCenter
+    - EcosystemRockyLinux
+    - EcosystemAlmaLinux
+    - EcosystemBitnami
+    - EcosystemPhotonOS
+    - EcosystemCRAN
+    - EcosystemBioconductor
+    - EcosystemSwiftURL
+  models.Event:
+    properties:
+      fixed:
+        type: string
+      introduced:
+        type: string
+      last_affected:
+        type: string
+      limit:
+        type: string
+    type: object
+  models.GroupInfo:
+    properties:
+      aliases:
+        description: Aliases include all aliases and IDs
+        items:
+          type: string
+        type: array
+      experimentalAnalysis:
+        additionalProperties:
+          $ref: '#/definitions/models.AnalysisInfo'
+        description: Map of Vulnerability IDs to AnalysisInfo
+        type: object
+      ids:
+        description: IDs expected to be sorted in alphanumeric order
+        items:
+          type: string
+        type: array
+      max_severity:
+        type: string
+    type: object
+  models.Package:
+    properties:
+      ecosystem:
+        $ref: '#/definitions/models.Ecosystem'
+      name:
+        type: string
+      purl:
+        type: string
+    type: object
+  models.PackageInfo:
+    properties:
+      commit:
+        type: string
+      ecosystem:
+        type: string
+      name:
+        type: string
+      version:
+        type: string
+    type: object
+  models.PackageSource:
+    properties:
+      packages:
+        items:
+          $ref: '#/definitions/models.PackageVulns'
+        type: array
+      source:
+        $ref: '#/definitions/models.SourceInfo'
+    type: object
+  models.PackageVulns:
+    properties:
+      dependency_groups:
+        items:
+          type: string
+        type: array
+      groups:
+        items:
+          $ref: '#/definitions/models.GroupInfo'
+        type: array
+      license_violations:
+        items:
+          type: string
+        type: array
+      licenses:
+        items:
+          type: string
+        type: array
+      package:
+        $ref: '#/definitions/models.PackageInfo'
+      vulnerabilities:
+        items:
+          $ref: '#/definitions/models.Vulnerability'
+        type: array
+    type: object
+  models.Range:
+    properties:
+      database_specific:
+        additionalProperties: true
+        type: object
+      events:
+        items:
+          $ref: '#/definitions/models.Event'
+        type: array
+      repo:
+        type: string
+      type:
+        $ref: '#/definitions/models.RangeType'
+    type: object
+  models.RangeType:
+    enum:
+    - SEMVER
+    - ECOSYSTEM
+    - GIT
+    type: string
+    x-enum-varnames:
+    - RangeSemVer
+    - RangeEcosystem
+    - RangeGit
+  models.Reference:
+    properties:
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  models.Severity:
+    properties:
+      score:
+        type: string
+      type:
+        $ref: '#/definitions/models.SeverityType'
+    type: object
+  models.SeverityType:
+    enum:
+    - CVSS_V2
+    - CVSS_V3
+    - CVSS_V4
+    type: string
+    x-enum-varnames:
+    - SeverityCVSSV2
+    - SeverityCVSSV3
+    - SeverityCVSSV4
+  models.SourceInfo:
+    properties:
+      path:
+        type: string
+      type:
+        type: string
+    type: object
+  models.Vulnerability:
+    properties:
+      affected:
+        items:
+          $ref: '#/definitions/models.Affected'
+        type: array
+      aliases:
+        items:
+          type: string
+        type: array
+      credits:
+        items:
+          $ref: '#/definitions/models.Credit'
+        type: array
+      database_specific:
+        additionalProperties: true
+        type: object
+      details:
+        type: string
+      id:
+        type: string
+      modified:
+        type: string
+      published:
+        type: string
+      references:
+        items:
+          $ref: '#/definitions/models.Reference'
+        type: array
+      related:
+        items:
+          type: string
+        type: array
+      schema_version:
+        type: string
+      severity:
+        items:
+          $ref: '#/definitions/models.Severity'
+        type: array
+      summary:
+        type: string
+      withdrawn:
+        type: string
+    type: object
+  models.VulnerabilityResults:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/models.PackageSource'
+        type: array
+    type: object
+host: localhost:1323
+info:
+  contact:
+    name: Delevoper
+    url: https://github.com/RomDmitriy
+  description: Этот сервис ищет lock-файлы в git-репозитории и возвращает список уязвимостей
+    из базы данных osv.dev.
+  title: WebScan Worker API
+  version: "1.0"
+paths:
+  /api/parse:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Наименование сервиса
+        enum:
+        - github
+        - gitlab
+        in: query
+        name: service
+        required: true
+        type: string
+      - description: Информация о пользователе и репозитории
+        in: body
+        name: user_info
+        required: true
+        schema:
+          $ref: '#/definitions/gitParser.UserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.VulnerabilityResults'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Парсинг git-репозитория для получения уязвимостей в lock-файлах
+produces:
+- application/json
+schemes:
+- http
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
