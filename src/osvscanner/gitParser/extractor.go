@@ -3,7 +3,7 @@ package gitParser
 import (
 	"fmt"
 	"sort"
-	"web-scan-worker/internal/models"
+	"web-scan-worker/src/internal/models"
 )
 
 type PackageDetailsParser = func(depFile DepFile) ([]models.PackageDetails, error)

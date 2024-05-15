@@ -3,9 +3,9 @@ package osvscanner
 import (
 	"errors"
 	"fmt"
-	"web-scan-worker/internal/models"
-	"web-scan-worker/osvscanner/gitParser"
-	"web-scan-worker/osvscanner/osv"
+	"web-scan-worker/src/internal/models"
+	"web-scan-worker/src/osvscanner/gitParser"
+	"web-scan-worker/src/osvscanner/osv"
 
 	"github.com/google/go-github/v62/github"
 )

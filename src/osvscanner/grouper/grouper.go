@@ -3,7 +3,7 @@ package grouper
 import (
 	"slices"
 	"sort"
-	"web-scan-worker/internal/models"
+	"web-scan-worker/src/internal/models"
 
 	"golang.org/x/exp/maps"
 )

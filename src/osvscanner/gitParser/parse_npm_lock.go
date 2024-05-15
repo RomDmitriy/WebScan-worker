@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"web-scan-worker/internal/cachedregexp"
-	"web-scan-worker/internal/models"
+	"web-scan-worker/src/internal/cachedregexp"
+	"web-scan-worker/src/internal/models"
 
 	"golang.org/x/exp/maps"
 )

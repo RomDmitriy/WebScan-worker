@@ -10,7 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
-	"web-scan-worker/internal/models"
+	"web-scan-worker/src/internal/models"
 
 	"golang.org/x/sync/semaphore"
 )

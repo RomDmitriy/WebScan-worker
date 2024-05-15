@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"web-scan-worker/osvscanner"
-	"web-scan-worker/osvscanner/gitParser"
+	"web-scan-worker/src/osvscanner"
+	"web-scan-worker/src/osvscanner/gitParser"
 
 	_ "web-scan-worker/docs"
 
@@ -14,7 +14,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger" // http-swagger middleware
 )
 
-// @Summary		Парсинг git-репозитория для получения уязвимостей в lock-файлах
+// @Summary			Парсинг git-репозитория для получения уязвимостей в lock-файлах
 // @Accept			json
 // @Produce			json
 // @Param			service			query		string						true	"Наименование сервиса" Enums(github, gitlab)
@@ -25,14 +25,6 @@ import (
 // @Failure			500
 // @Router			/api/parse [post]
 func parseRepo(w http.ResponseWriter, req *http.Request) {
-	// file, _ := lockfile.OpenLocalDepFile()
-	// var actions osvscanner.ScannerActions
-	// actions.LockfilePaths = []string{"./tests/package-lock_v2/package-lock.json"}
-	// actions.DirectoryPaths = []string{"./tests"}
-	// actions.GitCommits = []string{"1bacc05ff50a7d26522c83039d69a27c50e65647"}
-
-	// result, err := osvscanner.DoScan(actions)
-
 	gitService := req.URL.Query().Get("service")
 
 	if gitService != "github" && gitService != "gitlab" {
