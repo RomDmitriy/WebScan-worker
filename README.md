@@ -33,7 +33,7 @@ Lock-файлы:
 
 ### Использование
 После запуска документация по использованию доступна [по адресу]( http://localhost:1323/swagger).
+
 P.S. Токен для GitHub можно получить [тут](https://github.com/settings/tokens?type=beta).
 
-### Другие репозитории:
-[Тестовые lock-файлы](https://github.com/RomDmitriy/WebScan-tests)
+![image](https://github.com/RomDmitriy/WebScan-worker/assets/55810251/c32af670-0701-4584-b07f-abc908f4a240)
