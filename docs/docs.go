@@ -80,12 +80,15 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "repo": {
+                    "description": "Наименование репозитория без указания владельца",
                     "type": "string"
                 },
                 "token": {
+                    "description": "Access token пользователя в сервисе git",
                     "type": "string"
                 },
                 "user": {
+                    "description": "Имя пользователя в сервисе git",
                     "type": "string"
                 }
             }
