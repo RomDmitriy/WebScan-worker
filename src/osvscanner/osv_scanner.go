@@ -3,6 +3,7 @@ package osvscanner
 import (
 	"errors"
 	"fmt"
+	"math"
 	"web-scan-worker/src/internal/models"
 	"web-scan-worker/src/osvscanner/gitParser"
 	"web-scan-worker/src/osvscanner/osv"
@@ -21,6 +22,27 @@ type scannedPackage struct {
 }
 
 var ErrAPIFailed = errors.New("API query failed")
+
+func roundup(value float64) float64 {
+	factor := math.Pow(10, 1) // 10^1 = 10
+	return math.Ceil(value*factor) / factor
+}
+
+func ParseToSeverityCategory(value float64) string {
+	value = roundup(value)
+	if value >= 0.0 && value <= 3.9 {
+		return "Low"
+	}
+	if value >= 4.0 && value <= 6.9 {
+		return "Moderate"
+	}
+	if value >= 7.0 && value <= 10 {
+		return "High"
+	}
+
+	fmt.Println("Оценка вне допустимых границ:", value)
+	return "High"
+}
 
 // Загружаем, идентифицируем и парсим lock-файл
 func scanLockfile(file gitParser.DepFile) ([]scannedPackage, error) {

@@ -10,6 +10,9 @@ RUN go mod download
 # Копируем все файлы
 COPY ./ ./
 
+# Компилируем Prisma
+RUN go run github.com/steebchen/prisma-client-go generate
+
 # Компилируем
 RUN CGO_ENABLED=0 GOOS=linux go build -o worker
 

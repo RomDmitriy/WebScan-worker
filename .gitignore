@@ -1,2 +1,4 @@
 .vscode
 output.json
+.env
+db/

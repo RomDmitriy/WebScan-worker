@@ -1,0 +1,90 @@
+generator db {
+  provider = "go run github.com/steebchen/prisma-client-go"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model packages {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  version           String
+  ecosystem         ecosystem
+  packagesInSources packagesInSources[]
+  severities        severities[]
+
+  @@unique([name, ecosystem, version])
+}
+
+model repos {
+  id       Int         @id
+  owner_id Int
+  status   repo_status @default(NotScanned)
+  user     users       @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  scans    scans[]
+}
+
+model scans {
+  id                Int       @id @default(autoincrement())
+  repo_id           Int
+  scanned_time      DateTime  @default(now()) @db.Timestamp(6)
+  low_severity      Int       @default(0)
+  moderate_severity Int       @default(0)
+  high_severity     Int       @default(0)
+  repoitory         repos     @relation(fields: [repo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sources           sources[]
+}
+
+model severities {
+  id         String        @id
+  modified   DateTime
+  published  DateTime
+  aliases    String[]
+  summary    String
+  details    String
+  severity   severity_type
+  references Json[]
+  package_id Int
+  packages   packages      @relation(fields: [package_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model sources {
+  id                Int                 @id @default(autoincrement())
+  scan_id           Int
+  path              String
+  packagesInSources packagesInSources[]
+  scan              scans               @relation(fields: [scan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id    Int     @id
+  email String  @unique @db.VarChar(64)
+  repos repos[]
+}
+
+model packagesInSources {
+  package_id Int
+  source_id  Int
+  packages   packages @relation(fields: [package_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sources    sources  @relation(fields: [source_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([package_id, source_id])
+}
+
+enum ecosystem {
+  npm
+}
+
+enum repo_status {
+  NotScanned
+  Scanning
+  Scanned
+}
+
+enum severity_type {
+  Low
+  Moderate
+  High
+}

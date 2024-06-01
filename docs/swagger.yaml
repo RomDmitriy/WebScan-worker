@@ -4,6 +4,9 @@ consumes:
 definitions:
   gitParser.UserInfo:
     properties:
+      id:
+        description: Id пользователя в БД
+        type: integer
       repo:
         description: Наименование репозитория без указания владельца
         type: string
@@ -306,7 +309,7 @@ info:
   title: WebScan Worker API
   version: "1.0"
 paths:
-  /api/parse:
+  /parse:
     post:
       consumes:
       - application/json
@@ -314,7 +317,6 @@ paths:
       - description: Наименование сервиса
         enum:
         - github
-        - gitlab
         in: query
         name: service
         required: true
@@ -343,7 +345,4 @@ produces:
 - application/json
 schemes:
 - http
-securityDefinitions:
-  BasicAuth:
-    type: basic
 swagger: "2.0"

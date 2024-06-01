@@ -21,7 +21,7 @@
     "host": "localhost:1323",
     "basePath": "/",
     "paths": {
-        "/api/parse": {
+        "/parse": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -33,8 +33,7 @@
                 "parameters": [
                     {
                         "enum": [
-                            "github",
-                            "gitlab"
+                            "github"
                         ],
                         "type": "string",
                         "description": "Наименование сервиса",
@@ -76,6 +75,10 @@
         "gitParser.UserInfo": {
             "type": "object",
             "properties": {
+                "id": {
+                    "description": "Id пользователя в БД",
+                    "type": "integer"
+                },
                 "repo": {
                     "description": "Наименование репозитория без указания владельца",
                     "type": "string"
@@ -489,11 +492,6 @@
                     }
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
         }
     }
 }

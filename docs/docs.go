@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/parse": {
+        "/parse": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -36,8 +36,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "github",
-                            "gitlab"
+                            "github"
                         ],
                         "type": "string",
                         "description": "Наименование сервиса",
@@ -79,6 +78,10 @@ const docTemplate = `{
         "gitParser.UserInfo": {
             "type": "object",
             "properties": {
+                "id": {
+                    "description": "Id пользователя в БД",
+                    "type": "integer"
+                },
                 "repo": {
                     "description": "Наименование репозитория без указания владельца",
                     "type": "string"
@@ -492,11 +495,6 @@ const docTemplate = `{
                     }
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
         }
     }
 }`
