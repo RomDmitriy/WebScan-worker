@@ -36,7 +36,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 
 	// Валидация допустимости сервиса
 	if gitService != "github" {
-		fmt.Println("Unsupported git service")
+		fmt.Println("Неподдерживаемый git-сервис")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Неподдерживаемый git-сервис"))
 		return
@@ -65,13 +65,13 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	files, err := gitParser.GetFilesFromRepository(gitService, userData)
 	if err != nil {
 		fmt.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
+		// w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	// Логгирование
 	fmt.Println()
-	fmt.Println("Result list of lockfiles:")
+	fmt.Println("Итоговый список lock-файлов:")
 	for _, file := range files {
 		fmt.Println("-", file.GetPath())
 	}
@@ -81,7 +81,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	results, err := osvscanner.DoScan(files, userData)
 	if err != nil {
 		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		// w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -137,7 +137,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				fmt.Println("--- Уязвимость", severity.ID)
 
 				max_sev, _ := strconv.ParseFloat(pkg.Groups[0].MaxSeverity, 32)
-				sev_category := db.SeverityType(osvscanner.ParseToSeverityCategory(max_sev))
+				sev_category := db.SeverityType(osvscanner.ParseSeverityCategory(max_sev))
 				switch sev_category {
 				case db.SeverityTypeLow:
 					{

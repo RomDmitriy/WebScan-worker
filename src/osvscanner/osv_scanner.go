@@ -28,7 +28,7 @@ func roundup(value float64) float64 {
 	return math.Ceil(value*factor) / factor
 }
 
-func ParseToSeverityCategory(value float64) string {
+func ParseSeverityCategory(value float64) string {
 	value = roundup(value)
 	if value >= 0.0 && value <= 3.9 {
 		return "Low"
