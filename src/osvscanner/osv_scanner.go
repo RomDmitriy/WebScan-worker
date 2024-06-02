@@ -54,14 +54,14 @@ func scanLockfile(file gitParser.DepFile) ([]scannedPackage, error) {
 
 	parsedAsComment := ""
 
-	parsedAsComment = fmt.Sprintf("as a %s ", parsedLockfile.ParsedAs)
+	parsedAsComment = fmt.Sprintf("как %s ", parsedLockfile.ParsedAs)
 
 	fmt.Printf(
-		"Scanned %s file %sand found %d %s\n",
+		"Файл %s успешно просканирован %s- найдено %d %s\n",
 		file.Path,
 		parsedAsComment,
 		len(parsedLockfile.Packages),
-		"packages",
+		"пакетов",
 	)
 
 	packages := make([]scannedPackage, len(parsedLockfile.Packages))

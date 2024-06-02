@@ -15,8 +15,8 @@ import (
 	_ "web-scan-worker/docs"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger" // http-swagger middleware
 )
 
@@ -37,6 +37,8 @@ type severityCounts struct {
 // @Failure			500
 // @Router			/parse [post]
 func parseRepo(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("==================================")
+
 	// Получаем название сервиса
 	gitService := req.URL.Query().Get("service")
 
@@ -52,10 +54,12 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	var userData gitParser.UserInfo
 	err := json.NewDecoder(req.Body).Decode(&userData)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Ошибка при декодировании:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	fmt.Println("Репозиторий:", userData.User+"/"+userData.Repo)
 
 	client := database.PClient.Client
 	ctx := context.Background()
@@ -70,8 +74,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	// Получаем интересующие нас файлы
 	files, err := gitParser.GetFilesFromRepository(gitService, userData)
 	if err != nil {
-		fmt.Println(err)
-		// w.WriteHeader(http.StatusUnauthorized)
+		fmt.Println("Ошибка при парсинге файлов:", err)
 		return
 	}
 
@@ -81,7 +84,8 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	).Exec(ctx)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Ошибка при создании Скана в ЬД:", err)
+		return
 	}
 
 	var counts severityCounts
@@ -98,8 +102,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 		// Сканируем файлы на наличие уязвимостей
 		results, err := osvscanner.DoScan(files, userData)
 		if err != nil {
-			fmt.Println(err)
-			// w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println("Ошибка при поиске уязвимостей:", err)
 			return
 		}
 
@@ -116,7 +119,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 			).Exec(ctx)
 
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Ошибка при создании Источников:", err)
 			}
 
 			for _, pkg := range source.Packages {
@@ -135,7 +138,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				).Update().Exec(ctx)
 
 				if err != nil {
-					fmt.Println(err.Error())
+					fmt.Println("Ошибка при создании/обновлении пакетов:", err)
 				}
 
 				for _, severity := range pkg.Vulnerabilities {
@@ -196,7 +199,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 					).Exec(ctx)
 
 					if err != nil {
-						fmt.Println(err)
+						fmt.Println("Ошибка при создании/обновлении уязвимости:", err)
 					}
 				}
 
@@ -215,7 +218,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				).Exec(ctx)
 
 				if err != nil {
-					fmt.Println(err)
+					fmt.Println("Ошибка при создании связи Пакет-Источник:", err)
 				}
 			}
 		}
@@ -238,12 +241,13 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 		db.Scans.HighSeverity.Set(counts.High),
 	).Exec(ctx)
 
+	//TODO: кол-во пакетов в категориях не совпадает с кол-вом уязвимостей
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Ошибка при попытке пометить репозиторий просканированным:", err)
 	}
 
 	fmt.Println()
-	fmt.Println("Success!")
+	fmt.Println("Успех!")
 	fmt.Println("==================================")
 
 	// Возвращаем результат
@@ -279,14 +283,22 @@ func main() {
 	// Настройка API
 	r := chi.NewRouter()
 
-	handler := cors.Default().Handler(r)
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"POST"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:1323/swagger/doc.json"), //The url pointing to API definition
+		httpSwagger.URL("http://localhost:1323/swagger/doc.json"),
 	))
 
 	r.Post("/parse", parseRepo)
 
-	fmt.Println("Worker started!")
-	http.ListenAndServe(":1323", handler)
+	fmt.Println("Процесс запущен!")
+	http.ListenAndServe(":1323", r)
 }

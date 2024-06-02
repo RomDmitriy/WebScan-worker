@@ -3,6 +3,7 @@ package gitParser
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-github/v62/github"
 )
@@ -13,7 +14,11 @@ type Directory struct {
 }
 
 func GitHubGetContents(path string, data UserInfo) (Directory, error) {
-	fmt.Println("Trying to get content from \"" + path + "\"")
+	if strings.Contains(path, "..") {
+		fmt.Println("Получение содержимого из", path, "невозможно по причине запрета GitHub на содержание в пути \"..\"")
+		return Directory{}, nil
+	}
+	fmt.Println("Пробуем получить содержимое из \"" + path + "\"")
 	client := github.NewClient(nil).WithAuthToken(data.Token)
 
 	_, dir, _, err := client.Repositories.GetContents(context.Background(), data.User, data.Repo, path, nil)
@@ -21,25 +26,6 @@ func GitHubGetContents(path string, data UserInfo) (Directory, error) {
 	if err != nil {
 		return Directory{}, err
 	}
-
-	// req, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", data.User, data.Repo, path), nil)
-	// req.Header.Add("Authorization", "Bearer "+data.Token)
-	// res, err := client.Do(req)
-
-	// if err != nil {
-	// 	return Directory{}, GitHubResponseFile{}, err
-	// }
-
-	// defer res.Body.Close()
-
-	// body, _ := io.ReadAll(res.Body)
-
-	// // Пытаемся распарсить весь ответ как файл
-	// err = json.Unmarshal(body, &fileContent)
-	// if err == nil {
-	// 	// Если успешно, то возвращаем
-	// 	return Directory{folders: nil, files: nil}, fileContent, nil
-	// }
 
 	var files []github.RepositoryContent
 	var folders []github.RepositoryContent
@@ -59,7 +45,7 @@ func GitHubGetContents(path string, data UserInfo) (Directory, error) {
 }
 
 func GitHubDownload(file github.RepositoryContent, data UserInfo) (github.RepositoryContent, error) {
-	fmt.Println("Trying to download", file.GetPath())
+	fmt.Println("Пробуем скачать", file.GetPath())
 	client := github.NewClient(nil).WithAuthToken(data.Token)
 
 	githubFile, _, _, err := client.Repositories.GetContents(context.Background(), data.User, data.Repo, file.GetPath(), nil)
