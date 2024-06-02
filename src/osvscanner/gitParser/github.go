@@ -45,7 +45,7 @@ func GitHubGetContents(path string, data UserInfo) (Directory, error) {
 }
 
 func GitHubDownload(file github.RepositoryContent, data UserInfo) (github.RepositoryContent, error) {
-	fmt.Println("Пробуем скачать", file.GetPath())
+	fmt.Println("Пробуем скачать ", file.GetPath())
 	client := github.NewClient(nil).WithAuthToken(data.Token)
 
 	githubFile, _, _, err := client.Repositories.GetContents(context.Background(), data.User, data.Repo, file.GetPath(), nil)
@@ -53,23 +53,6 @@ func GitHubDownload(file github.RepositoryContent, data UserInfo) (github.Reposi
 	if err != nil {
 		return github.RepositoryContent{}, err
 	}
-
-	// content, err := client.Client().Get(file.GetHTMLURL())
-
-	// if err != nil {
-	// 	return github.RepositoryContent{}, err
-	// }
-
-	// defer content.Body.Close()
-	// body, _ := io.ReadAll(content.Body)
-	// res := string(body)
-	// // result := github.RepositoryContent{}
-	// // err = json.Unmarshal(body, &result)
-	// // if err != nil {
-	// // 	return "", err
-	// // }
-
-	// githubFile.Content = &res
 
 	return *githubFile, nil
 }

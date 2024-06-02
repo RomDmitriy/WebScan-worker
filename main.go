@@ -60,6 +60,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Println("Репозиторий:", userData.User+"/"+userData.Repo)
+	fmt.Println()
 
 	client := database.PClient.Client
 	ctx := context.Background()
@@ -89,6 +90,9 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var counts severityCounts
+	counts.Low = 0
+	counts.Moderate = 0
+	counts.High = 0
 
 	if len(files) != 0 {
 		// Логгирование
@@ -122,6 +126,10 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				fmt.Println("Ошибка при создании Источников:", err)
 			}
 
+			// Защита от дубликатов уязвимостей
+			var prevVulnID string
+			var prevVulnPackage string
+
 			for _, pkg := range source.Packages {
 				fmt.Println("- Пакет", pkg.Package.Name)
 				// Packages
@@ -141,8 +149,15 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 					fmt.Println("Ошибка при создании/обновлении пакетов:", err)
 				}
 
-				for _, severity := range pkg.Vulnerabilities {
-					fmt.Println("--- Уязвимость", severity.ID)
+				for _, Vulnerabilities := range pkg.Vulnerabilities {
+					// Защита от дубликатов уязвимостей
+					if prevVulnPackage == pkg.Package.Name && prevVulnID == Vulnerabilities.ID {
+						continue
+					}
+					prevVulnPackage = pkg.Package.Name
+					prevVulnID = Vulnerabilities.ID
+
+					fmt.Println("--- Уязвимость", Vulnerabilities.ID)
 
 					max_sev, _ := strconv.ParseFloat(pkg.Groups[0].MaxSeverity, 32)
 					sev_category := db.SeverityType(osvscanner.ParseSeverityCategory(max_sev))
@@ -164,32 +179,32 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 						}
 					}
 
-					// Severities
-					_, err := client.Severities.UpsertOne(
-						db.Severities.ID.Equals(severity.ID),
+					// Vulnerabilities
+					vul, err := client.Vulnerabilities.UpsertOne(
+						db.Vulnerabilities.ID.Equals(Vulnerabilities.ID),
 					).Create(
-						db.Severities.ID.Set(severity.ID),
-						db.Severities.Modified.Set(severity.Modified),
-						db.Severities.Published.Set(severity.Published),
-						db.Severities.Summary.Set(severity.Summary),
-						db.Severities.Details.Set(severity.Details),
-						db.Severities.Severity.Set(sev_category),
-						db.Severities.Packages.Link(
+						db.Vulnerabilities.ID.Set(Vulnerabilities.ID),
+						db.Vulnerabilities.Modified.Set(Vulnerabilities.Modified),
+						db.Vulnerabilities.Published.Set(Vulnerabilities.Published),
+						db.Vulnerabilities.Summary.Set(Vulnerabilities.Summary),
+						db.Vulnerabilities.Details.Set(Vulnerabilities.Details),
+						db.Vulnerabilities.Severity.Set(sev_category),
+						db.Vulnerabilities.Packages.Link(
 							db.Packages.NameEcosystemVersion(
 								db.Packages.Name.Equals(pkg.Package.Name),
 								db.Packages.Ecosystem.Equals(db.Ecosystem(pkg.Package.Ecosystem)),
 								db.Packages.Version.Equals(pkg.Package.Version),
 							),
 						),
-						db.Severities.Aliases.Set(severity.Aliases),
+						db.Vulnerabilities.Aliases.Set(Vulnerabilities.Aliases),
 					).Update(
-						db.Severities.Modified.Set(severity.Modified),
-						db.Severities.Published.Set(severity.Published),
-						db.Severities.Aliases.Set(severity.Aliases),
-						db.Severities.Summary.Set(severity.Summary),
-						db.Severities.Details.Set(severity.Details),
-						db.Severities.Severity.Set(sev_category),
-						db.Severities.Packages.Link(
+						db.Vulnerabilities.Modified.Set(Vulnerabilities.Modified),
+						db.Vulnerabilities.Published.Set(Vulnerabilities.Published),
+						db.Vulnerabilities.Aliases.Set(Vulnerabilities.Aliases),
+						db.Vulnerabilities.Summary.Set(Vulnerabilities.Summary),
+						db.Vulnerabilities.Details.Set(Vulnerabilities.Details),
+						db.Vulnerabilities.Severity.Set(sev_category),
+						db.Vulnerabilities.Packages.Link(
 							db.Packages.NameEcosystemVersion(
 								db.Packages.Name.Equals(pkg.Package.Name),
 								db.Packages.Ecosystem.Equals(db.Ecosystem(pkg.Package.Ecosystem)),
@@ -198,8 +213,30 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 						),
 					).Exec(ctx)
 
+					for _, reference := range Vulnerabilities.References {
+						// References
+						_, err := client.References.UpsertOne(
+							db.References.TypeURL(
+								db.References.Type.Equals(reference.Type),
+								db.References.URL.Equals(reference.URL),
+							),
+						).Create(
+							db.References.Type.Set(reference.Type),
+							db.References.URL.Set(reference.URL),
+							db.References.VulnerabilitiesID.Set(vul.ID),
+						).Update(
+							db.References.Type.Set(reference.Type),
+							db.References.URL.Set(reference.URL),
+							db.References.VulnerabilitiesID.Set(vul.ID),
+						).Exec(ctx)
+
+						if err != nil {
+							fmt.Println("Ошибка при создании/обновлении Ссылок", err)
+						}
+					}
+
 					if err != nil {
-						fmt.Println("Ошибка при создании/обновлении уязвимости:", err)
+						fmt.Println("Ошибка при создании/обновлении Уязвимости:", err)
 					}
 				}
 
@@ -241,7 +278,6 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 		db.Scans.HighSeverity.Set(counts.High),
 	).Exec(ctx)
 
-	//TODO: кол-во пакетов в категориях не совпадает с кол-вом уязвимостей
 	if err != nil {
 		fmt.Println("Ошибка при попытке пометить репозиторий просканированным:", err)
 	}
