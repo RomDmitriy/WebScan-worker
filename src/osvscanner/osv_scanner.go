@@ -98,7 +98,7 @@ func DoScan(files []github.RepositoryContent, userInfo gitParser.UserInfo) (mode
 	}
 
 	if len(scannedPackages) == 0 {
-		return models.VulnerabilityResults{}, errors.New("no packages found in scan")
+		return models.VulnerabilityResults{}, nil
 	}
 
 	filteredScannedPackages := filterUnscannablePackages(scannedPackages)
