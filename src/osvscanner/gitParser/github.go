@@ -13,6 +13,7 @@ type Directory struct {
 	files   []github.RepositoryContent
 }
 
+// Получить содержимое папки
 func GitHubGetContents(path string, data UserInfo) (Directory, error) {
 	if strings.Contains(path, "..") {
 		fmt.Println("Получение содержимого из", path, "невозможно по причине запрета GitHub на содержание в пути \"..\"")
@@ -44,6 +45,7 @@ func GitHubGetContents(path string, data UserInfo) (Directory, error) {
 	return Directory{folders: folders, files: files}, nil
 }
 
+// Получить содержимое файла.
 func GitHubDownload(file github.RepositoryContent, data UserInfo) (github.RepositoryContent, error) {
 	fmt.Println("Пробуем скачать ", file.GetPath())
 	client := github.NewClient(nil).WithAuthToken(data.Token)

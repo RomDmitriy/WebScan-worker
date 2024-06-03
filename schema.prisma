@@ -76,9 +76,9 @@ model vulnerabilities {
 
 model references {
   id                Int              @id @default(autoincrement())
-  type              String
+  type              reference_type
   url               String
-  vulnerabilities   vulnerabilities? @relation(fields: [vulnerabilitiesId], references: [id])
+  vulnerabilities   vulnerabilities? @relation(fields: [vulnerabilitiesId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vulnerabilitiesId String?
 
   @@unique([type, url])
@@ -86,6 +86,7 @@ model references {
 
 enum ecosystem {
   npm
+  PyPI
 }
 
 enum repo_status {
@@ -98,4 +99,17 @@ enum severity_type {
   Low
   Moderate
   High
+}
+
+enum reference_type {
+  ADVISORY
+  ARTICLE
+  DETECTION
+  DISCUSSION
+  REPORT
+  FIX
+  INTRODUCED
+  PACKAGE
+  EVIDENCE
+  WEB
 }

@@ -33,7 +33,7 @@ func getFunctions(service string) (getContentsFunc, getDownload, error) {
 	var getContents = gitGetContents[service]
 	var getDownload = gitDownload[service]
 	if getContents == nil || getDownload == nil {
-		return nil, nil, fmt.Errorf("unsupported service")
+		return nil, nil, fmt.Errorf("неподдерживаемый сервис")
 	}
 	return getContents, getDownload, nil
 }
@@ -72,6 +72,7 @@ func recursiveParseDirs(path string, data UserInfo, getter getContentsFunc, down
 	return files, nil
 }
 
+// Получить список подходящих файлов из репозитория
 func GetFilesFromRepository(service string, user UserInfo) ([]github.RepositoryContent, error) {
 	getContents, getDownload, err := getFunctions(service)
 	if err != nil {

@@ -4,24 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"web-scan-worker/src/internal/models"
 	"web-scan-worker/src/osvscanner/gitParser"
+	"web-scan-worker/src/osvscanner/models"
 	"web-scan-worker/src/osvscanner/osv"
 
 	"github.com/google/go-github/v62/github"
 )
 
 type scannedPackage struct {
-	PURL      string
 	Name      string
 	Ecosystem models.Ecosystem
-	Commit    string
 	Version   string
 	Source    models.SourceInfo
 	DepGroups []string
 }
 
-var ErrAPIFailed = errors.New("API query failed")
+var ErrAPIFailed = errors.New("ошибка API запроса")
 
 func roundup(value float64) float64 {
 	factor := math.Pow(10, 1) // 10^1 = 10
@@ -69,7 +67,6 @@ func scanLockfile(file gitParser.DepFile) ([]scannedPackage, error) {
 		packages[i] = scannedPackage{
 			Name:      pkgDetail.Name,
 			Version:   pkgDetail.Version,
-			Commit:    pkgDetail.Commit,
 			Ecosystem: pkgDetail.Ecosystem,
 			DepGroups: pkgDetail.DepGroups,
 			Source: models.SourceInfo{
@@ -82,7 +79,7 @@ func scanLockfile(file gitParser.DepFile) ([]scannedPackage, error) {
 	return packages, nil
 }
 
-// Perform osv scanner action, with optional reporter to output information
+// Провести OSV-сканирование
 func DoScan(files []github.RepositoryContent, userInfo gitParser.UserInfo) (models.VulnerabilityResults, error) {
 	scannedPackages := []scannedPackage{}
 
@@ -120,16 +117,13 @@ func DoScan(files []github.RepositoryContent, userInfo gitParser.UserInfo) (mode
 	return results, nil
 }
 
-// filterUnscannablePackages removes packages that don't have enough information to be scanned
-// e,g, local packages that specified by path
+// Фильтр пакетов, о которых недостаточно информации для проверки
 func filterUnscannablePackages(packages []scannedPackage) []scannedPackage {
 	out := make([]scannedPackage, 0, len(packages))
 	for _, p := range packages {
 		switch {
 		// If none of the cases match, skip this package since it's not scannable
 		case p.Ecosystem != "" && p.Name != "" && p.Version != "":
-		case p.Commit != "":
-		case p.PURL != "":
 		default:
 			continue
 		}
@@ -139,25 +133,20 @@ func filterUnscannablePackages(packages []scannedPackage) []scannedPackage {
 	return out
 }
 
+// Сделать запрос к OSV
 func makeRequest(
 	packages []scannedPackage) (*osv.HydratedBatchedResponse, error) {
-	// Make OSV queries from the packages.
 	var query osv.BatchedQuery
 	for _, p := range packages {
 		switch {
-		// Prefer making package requests where possible.
 		case p.Ecosystem != "" && p.Name != "" && p.Version != "":
 			query.Queries = append(query.Queries, osv.MakePkgRequest(models.PackageDetails{
 				Name:      p.Name,
 				Version:   p.Version,
 				Ecosystem: p.Ecosystem,
 			}))
-		case p.Commit != "":
-			query.Queries = append(query.Queries, osv.MakeCommitRequest(p.Commit))
-		case p.PURL != "":
-			query.Queries = append(query.Queries, osv.MakePURLRequest(p.PURL))
 		default:
-			return nil, fmt.Errorf("package %v does not have a commit, PURL or ecosystem/name/version identifier", p)
+			return nil, fmt.Errorf("пакет %v не содержит ecosystem/name/version идентификаторы", p)
 		}
 	}
 
@@ -167,12 +156,12 @@ func makeRequest(
 
 	resp, err := osv.MakeRequest(query)
 	if err != nil {
-		return &osv.HydratedBatchedResponse{}, fmt.Errorf("%w: osv.dev query failed: %w", ErrAPIFailed, err)
+		return &osv.HydratedBatchedResponse{}, fmt.Errorf("%w: ошибка запроса к osv.dev: %w", ErrAPIFailed, err)
 	}
 
 	hydratedResp, err := osv.Hydrate(resp)
 	if err != nil {
-		return &osv.HydratedBatchedResponse{}, fmt.Errorf("%w: failed to hydrate OSV response: %w", ErrAPIFailed, err)
+		return &osv.HydratedBatchedResponse{}, fmt.Errorf("%w: ошибка упаковки OSV ответа: %w", ErrAPIFailed, err)
 	}
 
 	return hydratedResp, nil

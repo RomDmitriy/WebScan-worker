@@ -10,8 +10,7 @@ Git-сервисы:
 
 Lock-файлы:
 * [X] npm	(package-lock.json)
-* [ ] pip	(requirements.txt)
-* [ ] yarn	(yarn.lock)
+* [X] pip	(requirements.txt)
 
 ### Требования
 Необходим:

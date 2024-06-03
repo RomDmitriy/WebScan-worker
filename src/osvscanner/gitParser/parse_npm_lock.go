@@ -3,11 +3,9 @@ package gitParser
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"path"
 	"strings"
-	"web-scan-worker/src/internal/cachedregexp"
-	"web-scan-worker/src/internal/models"
+	"web-scan-worker/src/osvscanner/models"
 
 	"golang.org/x/exp/maps"
 )
@@ -94,7 +92,6 @@ func parseNpmLockDependencies(dependencies map[string]NpmLockDependency) map[str
 
 		version := detail.Version
 		finalVersion := version
-		commit := ""
 
 		// Если пакет имеет псевдоним, берём имя и версию
 		if strings.HasPrefix(detail.Version, "npm:") {
@@ -106,17 +103,6 @@ func parseNpmLockDependencies(dependencies map[string]NpmLockDependency) map[str
 		// Мы не можем получить версию из зависимости «file:»
 		if strings.HasPrefix(detail.Version, "file:") {
 			finalVersion = ""
-		} else {
-			commit = tryExtractCommit(detail.Version)
-
-			// Если есть коммит, мы хотим выполнить анализ на основе него,
-			// а не версии (версии в любом случае должны совпадать, чтобы коммиты совпадали).
-			//
-			// Также мы не можем узнать версию, поэтому просто ставим её пустой
-			if commit != "" {
-				finalVersion = ""
-				version = commit
-			}
 		}
 
 		// Собираем информацию о пакете в объект
@@ -125,7 +111,6 @@ func parseNpmLockDependencies(dependencies map[string]NpmLockDependency) map[str
 			Version:   finalVersion,
 			Ecosystem: NpmEcosystem,
 			CompareAs: NpmEcosystem,
-			Commit:    commit,
 			DepGroups: detail.depGroups(),
 		}
 	}
@@ -161,24 +146,12 @@ func parseNpmLockPackages(packages map[string]NpmLockPackage) map[string]models.
 			finalName = extractNpmPackageName(namePath)
 		}
 
-		// Берём версию пакета
-		finalVersion := detail.Version
-
-		commit := tryExtractCommit(detail.Resolved)
-
-		// если есть коммит, мы хотим выполнить анализ на основе него,
-		// а не версии (версии в любом случае должны совпадать, чтобы коммиты совпадали)
-		if commit != "" {
-			finalVersion = commit
-		}
-
 		// Собираем информацию о пакете в объект
-		details[finalName+"@"+finalVersion] = models.PackageDetails{
+		details[finalName+"@"+detail.Version] = models.PackageDetails{
 			Name:      finalName,
 			Version:   detail.Version,
 			Ecosystem: NpmEcosystem,
 			CompareAs: NpmEcosystem,
-			Commit:    commit,
 			DepGroups: detail.depGroups(),
 		}
 	}
@@ -195,60 +168,6 @@ func parseNpmLock(lockfile NpmLockfile) map[string]models.PackageDetails {
 
 	// Если lock-файл версии <2
 	return parseNpmLockDependencies(lockfile.Dependencies)
-}
-
-// Пытаемся получить версию с коммита
-func tryExtractCommit(resolution string) string {
-	// language=GoRegExp
-	matchers := []string{
-		// ssh://...
-		// git://...
-		// git+ssh://...
-		// git+https://...
-		`(?:^|.+@)(?:git(?:\+(?:ssh|https))?|ssh)://.+#(\w+)$`,
-		// https://....git/...
-		`(?:^|.+@)https://.+\.git#(\w+)$`,
-		`https://codeload\.github\.com(?:/[\w-.]+){2}/tar\.gz/(\w+)$`,
-		`.+#commit[:=](\w+)$`,
-		// github:...
-		// bitbucket:...
-		`^(?:github):.+#(\w+)$`,
-	}
-
-	for _, matcher := range matchers {
-		re := cachedregexp.MustCompile(matcher)
-		matched := re.FindStringSubmatch(resolution)
-
-		if matched != nil {
-			return matched[1]
-		}
-	}
-
-	u, err := url.Parse(resolution)
-
-	if err == nil {
-		gitRepoHosts := []string{
-			"github.com",
-		}
-
-		for _, host := range gitRepoHosts {
-			if u.Host != host {
-				continue
-			}
-
-			if u.RawQuery != "" {
-				queries := u.Query()
-
-				if queries.Has("ref") {
-					return queries.Get("ref")
-				}
-			}
-
-			return u.Fragment
-		}
-	}
-
-	return ""
 }
 
 type NpmLockExtractor struct{}

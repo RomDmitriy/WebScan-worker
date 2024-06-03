@@ -3,7 +3,7 @@ package grouper
 import (
 	"slices"
 	"sort"
-	"web-scan-worker/src/internal/models"
+	"web-scan-worker/src/osvscanner/models"
 
 	"golang.org/x/exp/maps"
 )
@@ -22,38 +22,39 @@ func min(a, b int) int {
 }
 
 func hasAliasIntersection(v1, v2 IDAliases) bool {
-	// Check if any aliases intersect.
+	// Проверка не пересекаются ли псевдонимы
 	for _, alias := range v1.Aliases {
 		if slices.Contains(v2.Aliases, alias) {
 			return true
 		}
 	}
-	// Check if either IDs are in the others' aliases.
+	// Проверка, находятся ли какие-либо идентификаторы в псевдонимах других
 	return slices.Contains(v1.Aliases, v2.ID) || slices.Contains(v2.Aliases, v1.ID)
 }
 
-// Group groups vulnerabilities by aliases.
+// Группируем уязвимости по псевдонимам
 func Group(vulns []IDAliases) []models.GroupInfo {
-	// Mapping of `vulns` index to a group ID. A group ID is just another index in the `vulns` slice.
+	// Сопоставляем индекс `vulns` с идентификатором группы.
+	// Идентификатор группы — это просто еще один индекс в срезе «vulns»
 	groups := make([]int, len(vulns))
 
-	// Initially make every vulnerability its own group.
+	// Изначально сделаем каждую уязвимость отдельной группой
 	for i := 0; i < len(vulns); i++ {
 		groups[i] = i
 	}
 
-	// Do a pair-wise (n^2) comparison and merge all intersecting vulns.
+	// Выполним попарное сравнение (n^2) и объединим все пересекающиеся уязвимости
 	for i := 0; i < len(vulns); i++ {
 		for j := i + 1; j < len(vulns); j++ {
 			if hasAliasIntersection(vulns[i], vulns[j]) {
-				// Merge the two groups. Use the smaller index as the representative ID.
+				// Объединяем две группы. Используем меньший индекс.
 				groups[i] = min(groups[i], groups[j])
 				groups[j] = groups[i]
 			}
 		}
 	}
 
-	// Extract groups into the final result structure.
+	// Развернём группу в конечную структуру
 	extractedGroups := map[int][]string{}
 	extractedAliases := map[int][]string{}
 	for i, gid := range groups {
@@ -61,19 +62,19 @@ func Group(vulns []IDAliases) []models.GroupInfo {
 		extractedAliases[gid] = append(extractedAliases[gid], vulns[i].Aliases...)
 	}
 
-	// Sort by group ID to maintain stable order for tests.
+	// Сортируем по идентификатору группы для поддержания стабильного порядка тестов
 	sortedKeys := maps.Keys(extractedGroups)
 	sort.Ints(sortedKeys)
 
 	result := make([]models.GroupInfo, 0, len(sortedKeys))
 	for _, key := range sortedKeys {
-		// Sort the strings so they are always in the same order
+		// Сортируем строки так, чтобы они всегда находились в одном и том же порядке
 		sort.Strings(extractedGroups[key])
 
-		// Add IDs to aliases
+		// Добавляем IDs к псевдонимам
 		extractedAliases[key] = append(extractedAliases[key], extractedGroups[key]...)
 
-		// Dedup entries
+		// Убираем дубликаты
 		sort.Strings(extractedAliases[key])
 		extractedAliases[key] = slices.Compact(extractedAliases[key])
 
