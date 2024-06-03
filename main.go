@@ -354,7 +354,7 @@ func main() {
 	}))
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:1323/swagger/doc.json"),
+		httpSwagger.URL("http://localhost:"+os.Getenv("PORT")+"/swagger/doc.json"),
 	))
 
 	r.Post("/parse", parseRepo)
