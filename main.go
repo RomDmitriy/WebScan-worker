@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"web-scan-worker/db"
 	"web-scan-worker/src/database"
@@ -359,5 +360,5 @@ func main() {
 	r.Post("/parse", parseRepo)
 
 	fmt.Println("Процесс запущен!")
-	http.ListenAndServe(":1323", r)
+	http.ListenAndServe(":"+os.Getenv("PORT"), r)
 }
