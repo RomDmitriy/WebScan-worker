@@ -359,6 +359,6 @@ func main() {
 
 	r.Post("/parse", parseRepo)
 
-	fmt.Println("Процесс запущен!")
+	fmt.Println("Процесс запущен! Порт", os.Getenv("PORT"))
 	http.ListenAndServe(":"+os.Getenv("PORT"), r)
 }
