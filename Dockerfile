@@ -17,6 +17,4 @@ RUN go run github.com/steebchen/prisma-client-go generate
 # Компилируем
 RUN CGO_ENABLED=0 GOOS=linux go build -o worker
 
-EXPOSE 1323
-
 CMD ["./worker"]
