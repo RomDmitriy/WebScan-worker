@@ -10,7 +10,6 @@ import (
 
 type UserInfo struct {
 	Token  string // Access token пользователя в сервисе git
-	Id     int    // Id пользователя в БД
 	User   string // Имя пользователя в сервисе git
 	Repo   string // Наименование репозитория без указания владельца
 	RepoId int    // Id репозитория в БД
