@@ -11,6 +11,7 @@ RUN go mod download
 COPY ./ ./
 
 # Компилируем Prisma
+ENV DATABASE_URL=postgresql://postgres:postgres@postgres:5432/webscan?schema=public
 RUN go run github.com/steebchen/prisma-client-go generate
 
 # Компилируем
