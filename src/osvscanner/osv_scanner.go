@@ -104,7 +104,7 @@ func DoScan(files []github.RepositoryContent, userInfo gitParser.UserInfo) (mode
 	filteredScannedPackages := filterUnscannablePackages(scannedPackages)
 
 	if len(filteredScannedPackages) != len(scannedPackages) {
-		fmt.Printf("Filtered %d local package/s from the scan.\n", len(scannedPackages)-len(filteredScannedPackages))
+		fmt.Printf("отфильтровано %d локальных пакетов из сканирования.\n", len(scannedPackages)-len(filteredScannedPackages))
 	}
 
 	vulnsResp, err := makeRequest(filteredScannedPackages)
