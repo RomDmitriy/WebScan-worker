@@ -97,16 +97,15 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	counts.High = 0
 
 	// Логгирование
-	fmt.Println()
-	fmt.Println("Итоговый список lock-файлов:")
-	for _, file := range files {
-		if len(files) == 0 {
-			fmt.Println("Список пуст")
-		} else {
+	if len(files) > 0 {
+		fmt.Println()
+		fmt.Println("Итоговый список lock-файлов:")
+		for _, file := range files {
 			fmt.Println("-", file.GetPath())
+
 		}
+		fmt.Println()
 	}
-	fmt.Println()
 
 	// Сканируем файлы на наличие уязвимостей
 	results, err := osvscanner.DoScan(files, userData)
