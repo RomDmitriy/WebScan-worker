@@ -248,7 +248,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 					).Create(
 						db.References.Type.Set(db.ReferenceType(reference.Type)),
 						db.References.URL.Set(reference.URL),
-						db.References.VulnerabilitiesID.Set(vul.ID),
+						db.References.Vulnerabilities.Link(db.Vulnerabilities.ID.Equals(vul.ID)),
 					).Update(
 						db.References.Type.Set(db.ReferenceType(reference.Type)),
 						db.References.URL.Set(reference.URL),
