@@ -81,7 +81,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// scan
+	// Создаём запись о сканировании
 	scan, err := client.Scans.CreateOne(
 		db.Scans.Repoitory.Link(db.Repos.ID.Equals(userData.RepoId)),
 	).Exec(ctx)
@@ -140,7 +140,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 	for _, source := range results.Results {
 		fmt.Println("Источник", source.Source.Path)
 
-		// sources
+		// Создаём запись об источнике
 		src, err := client.Sources.CreateOne(
 			db.Sources.Path.Set(source.Source.Path),
 			db.Sources.Scan.Link(db.Scans.ID.Equals(scan.ID)),
@@ -156,7 +156,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 
 		for _, pkg := range source.Packages {
 			fmt.Println("- Пакет", pkg.Package.Name)
-			// Packages
+			// Создаём запись о пакете
 			_, err := client.Packages.UpsertOne(
 				db.Packages.NameEcosystemVersion(
 					db.Packages.Name.Equals(pkg.Package.Name),
@@ -203,7 +203,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 					}
 				}
 
-				// Vulnerabilities
+				// Создаём запись о уязвимости
 				vul, err := client.Vulnerabilities.UpsertOne(
 					db.Vulnerabilities.ID.Equals(Vulnerabilities.ID),
 				).Create(
@@ -238,7 +238,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				).Exec(ctx)
 
 				for _, reference := range Vulnerabilities.References {
-					// References
+					// Создаём запись о ссылке на сторонний источник
 					_, err := client.References.UpsertOne(
 						db.References.TypeURL(
 							db.References.Type.Equals(db.ReferenceType(reference.Type)),
@@ -264,7 +264,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			// PackagesInSources
+			// Создаём запись о связи пакета и источника
 			_, err = client.PackagesInSources.CreateOne(
 				db.PackagesInSources.Packages.Link(
 					db.Packages.NameEcosystemVersion(
@@ -330,6 +330,7 @@ func parseRepo(w http.ResponseWriter, req *http.Request) {
 // @BasePath  /
 
 func main() {
+	// Подгружаем .env файл
 	godotenv.Load()
 
 	// Подключение к БД
@@ -341,21 +342,20 @@ func main() {
 
 	// Настройка API
 	r := chi.NewRouter()
-
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300,
 	}))
 
+	// Регистрируем роут до Swagger-документации
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:"+os.Getenv("PORT")+"/swagger/doc.json"),
 	))
 
+	// Регистрируем роут до функции сканирования репозитория на наличие уязвимостей
 	r.Post("/parse", parseRepo)
 
 	fmt.Println("Процесс запущен! Порт", os.Getenv("PORT"))
